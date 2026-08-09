@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园智能客服</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f6fa; }
+        .chat-container {
+            max-width: 700px; margin: 30px auto; background: #fff;
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden; display: flex; flex-direction: column; height: 80vh;
+        }
+        .chat-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #fff; padding: 20px; text-align: center; font-size: 20px; font-weight: bold;
+        }
+        .chat-messages {
+            flex: 1; padding: 20px; overflow-y: auto; background: #f9fafb;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .message {
+            max-width: 80%; padding: 12px 16px; border-radius: 16px;
+            word-break: break-word; line-height: 1.6; position: relative;
+        }
+        .message.user {
+            align-self: flex-end; background: #4facfe; color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .message.assistant {
+            align-self: flex-start; background: #fff; color: #333;
+            border: 1px solid #e5e7eb; border-bottom-left-radius: 4px;
+        }
+        .message .time {
+            font-size: 11px; color: #999; margin-top: 4px; text-align: right;
+        }
+        .chat-input-area {
+            padding: 16px; background: #fff; border-top: 1px solid #eee;
+            display: flex; gap: 10px;
+        }
+        #questionInput {
+            flex: 1; padding: 12px 16px; border: 2px solid #e5e7eb;
+            border-radius: 24px; outline: none; font-size: 15px;
+            transition: border-color 0.3s;
+        }
+        #questionInput:focus { border-color: #4facfe; }
+        #sendBtn {
+            padding: 12px 24px; background: #4facfe; color: #fff;
+            border: none; border-radius: 24px; font-size: 15px; cursor: pointer;
+            transition: background 0.3s;
+        }
+        #sendBtn:hover { background: #3d8bfd; }
+        #sendBtn:disabled { background: #a0c4ff; cursor: not-allowed; }
+        .status-tag {
+            align-self: flex-start; font-size: 12px; color: #888;
+            background: #f0f0f0; padding: 4px 12px; border-radius: 12px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-header">🎓 校园智能客服</div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+        <input type="text" id="questionInput" placeholder="输入你的问题..." autocomplete="off" />
+        <button id="sendBtn" onclick="sendQuestion()">发送</button>
+    </div>
+</div>
+
+<script>
+    const chatMessages = document.getElementById('chatMessages');
+    const questionInput = document.getElementById('questionInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    const sessionId = 'web_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+    const ws = new WebSocket('ws://localhost:9001/ws/qa/' + sessionId);
+
+    ws.onopen = () => {
+        console.log('WebSocket 连接已建立，sessionId:', sessionId);
+    };
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'answer') {
+            const statusTags = document.querySelectorAll('.status-tag');
+            statusTags.forEach(tag => tag.remove());
+            addMessage('assistant', data.answer);
+        }
+        sendBtn.disabled = false;
+    };
+
+    ws.onerror = (error) => {
+        console.error('WebSocket 错误:', error);
+        addMessage('assistant', '连接异常，请刷新页面重试。');
+        sendBtn.disabled = false;
+    };
+
+    async function sendQuestion() {
+        const question = questionInput.value.trim();
+        if (!question) return;
+
+        addMessage('user', question);
+        questionInput.value = '';
+        sendBtn.disabled = true;
+
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'status-tag';
+        statusDiv.textContent = 'AI 正在思考中...';
+        chatMessages.appendChild(statusDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        try {
+            const response = await fetch('http://localhost:8080/api/qa/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId: sessionId, question: question })
+            });
+            const result = await response.json();
+            if (result.code !== 200) {
+                statusDiv.remove();
+                addMessage('assistant', '请求失败：' + (result.message || '服务器错误'));
+                sendBtn.disabled = false;
+            }
+        } catch (error) {
+            statusDiv.remove();
+            addMessage('assistant', '网络错误，请检查服务是否启动。');
+            sendBtn.disabled = false;
+        }
+    }
+
+    function addMessage(role, content) {
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2,'0') + ':' +
+            now.getMinutes().toString().padStart(2,'0');
+        const div = document.createElement('div');
+        div.className = 'message ' + role;
+        div.innerHTML = content + '<div class="time">' + timeStr + '</div>';
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    questionInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendQuestion();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+server:
+  port: 9001
+
+spring:
+  application:
+    name: campus-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8080
+        port: 8720
+    openfeign:
+      compression:
+        request:
+          enabled: true
+          mime-types: text/xml,application/xml,application/json
+          min-request-size: 2048
+        response:
+          enabled: true
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 60000
+      okhttp:
+        enabled: true
+  redis:
+    host: 127.0.0.1
+    port: 6379
+
+ai:
+  service:
+    url: http://127.0.0.1:8000

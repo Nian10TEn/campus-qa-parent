@@ -1,0 +1,24 @@
+# Java
+target/
+*.class
+*.jar
+*.war
+
+# Python
+ai-service/venv/
+ai-service/__pycache__/
+ai-service/*.pyc
+ai-service/models/        # 模型文件太大，不传
+*.egg-info/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 敏感信息（api key 等不要上传）
+ai-service/main.py 中如果有真实的 DeepSeek API Key，记得删掉或替换成占位符后再提交

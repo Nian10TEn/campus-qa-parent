@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: campus-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: campus-service-route
+          uri: lb://campus-service
+          predicates:
+            - Path=/api/**
+          filters:
+            - StripPrefix=1
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://127.0.0.1:5500"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8080
+        port: 8719
