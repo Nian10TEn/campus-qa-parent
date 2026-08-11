@@ -1,11 +1,3 @@
-|------|------|
-| 后端框架 | Spring Boot 2.7.18、Spring Cloud 2021.0.5、Spring Cloud Alibaba 2021.0.5.0 |
-| 注册中心 / 限流 | Nacos Discovery、Sentinel |
-| 通信 | OpenFeign、Spring Cloud Gateway、WebSocket（原生 javax.websocket） |
-| 缓存 / 队列 | Redis（问题队列 + 会话历史 + 最近答案） |
-| AI 服务 | Python FastAPI、LangChain、FAISS、FastEmbed（bge-small-zh-v1.5）、DeepSeek API |
-| 前端 | 原生 HTML / CSS / JavaScript（单页） |
-| JDK | 11+ |
 
 ## 目录结构
 
